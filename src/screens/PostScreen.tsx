@@ -12,9 +12,11 @@ import Post from 'components/Post';
 import NavBar from 'elements/NavBar';
 import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
-import { useNavigation } from '@react-navigation/native';
 
-const PostScreen = memo(({ navigation }) => {
+import TopBar from 'elements/TopBar';
+
+const PostScreen = ({ navigation }) => {
+
   const { height, width, top, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const [posts, setPosts] = useState([]);
@@ -28,6 +30,7 @@ const PostScreen = memo(({ navigation }) => {
   const [nextPageUrl, setNextPageUrl] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+
     
   useEffect(() => {
     fetchRedditPosts();
@@ -55,7 +58,6 @@ const PostScreen = memo(({ navigation }) => {
     }
   };
   const loadNextPage = async () => {
-  console.log(100);
   try {
     setMoreLoading(true);
     console.log(nextPageUrl);
@@ -98,10 +100,11 @@ const PostScreen = memo(({ navigation }) => {
     const subreddit = $post.find('.subreddit').text();
     const photoOrLink = $post.find('.thumbnail').attr('href');
     const upvotes = parseInt($post.find('.score.likes').text());
-    const comments = parseInt($post.find('.bylink.comments').text());
+    const commentText = $post.find('.bylink.comments').text();
+    const comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
     const time = $post.find('.live-timestamp').text();
     let image = undefined;
-    const link = $post.find('.title > a:first-child').attr('href');
+    const link = $post.find('.bylink.comments').attr('href');
 
     image = $post.find('.thumbnail img').attr('src');
 
@@ -125,8 +128,8 @@ const PostScreen = memo(({ navigation }) => {
   return posts;
 };
 
-  const handlePostPress = async (link) => {
-    navigation.navigate('CommentsScreen', { postUrl: link });
+  const handlePostPress = (post) => {
+    navigation.navigate('CommentsScreen', { postContent: post });
   };
 
   const handleSearch = () => {
@@ -141,25 +144,7 @@ const PostScreen = memo(({ navigation }) => {
     
   return (
     <Container style={styles.container}>
-      <HStack pt={top + 4} level="2" ph={12} itemsCenter pv={4}>
-      <NavigationAction icon="envelope" />
-      {showSearchBar ? (
-      <TextInput
-      style={styles.searchInput}
-      value={searchInput}
-      onChangeText={setSearchInput}
-      onBlur={() => setShowSearchBar(false)}
-      onSubmitEditing={handleSearch}
-      placeholder="Search subreddit"
-      autoFocus
-     />
-     ) : (
-     <TouchableOpacity onPress={() => setShowSearchBar(true)}>
-      <Text category="h5">{subredditName !== '' ? subredditName : 'Home'}</Text>
-     </TouchableOpacity>
-      )}
-      <NavigationAction icon="gearsix" />
-      </HStack>
+      <TopBar subredditName={subredditName} onSearchPress={() => setShowSearchBar(true)} top={top} />
 
       <ScrollView
       style={styles.content}
@@ -192,7 +177,7 @@ const PostScreen = memo(({ navigation }) => {
               time: post.time,
               link: post.link,
             }}
-            onPress={() => handlePostPress(post.link)}
+            onPress={handlePostPress}
           />
         ))}
         <ActivityIndicator style={styles.loadingIndicator} />
@@ -200,20 +185,9 @@ const PostScreen = memo(({ navigation }) => {
       
       )}
     </ScrollView>
-      <VStack
-        style={[
-          styles.bottom,
-          {
-            bottom: bottom,
-          },
-        ]}>
-        <NavBar withLogo />
-      </VStack>
     </Container>
   );
-});
-
-export default PostScreen;
+};
 
 const themedStyles = StyleService.create({
   container: {
@@ -264,3 +238,5 @@ const themedStyles = StyleService.create({
 
 const TABS = ['top', 'best', 'hot', 'new', 'rising', 'controversial'];
 const initialActiveTabIndex = 1; // Set the desired initial active tab index
+
+export default PostScreen;

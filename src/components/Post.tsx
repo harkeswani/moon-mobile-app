@@ -23,21 +23,18 @@ interface PostContentProps {
   link: string;
 }
 
-const Post = memo(({ data }: { data: PostContentProps }) => {
-  const { goBack } = useNavigation();
+const Post = memo(({ data, onPress }: { data: PostContentProps; onPress: (link: string) => void }) => {
   const { height, width, top, bottom } = useLayout();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
+    
+  const navigation = useNavigation();
 
   const {title, description, subreddit, tags, upvotes, comments, image, time, link} = data;
   const imageUrl = image && image.replace(/^\/\//, '');
-    
-  const handleLinkPress = () => {
-    navigate(link);
-  };
-
+  console.log(imageUrl);
   return (
-    <TouchableOpacity onPress={handleLinkPress}>
+    <TouchableOpacity onPress={() => onPress(data)}>
       <VStack style={styles.container} level="2" border={8}>
         <VStack gap={0} padding={8}>
           <Text category="h5">{title}</Text>
@@ -50,7 +47,7 @@ const Post = memo(({ data }: { data: PostContentProps }) => {
           <HStack style={styles.meta} alignment="center" justifyContent="space-between">
         <HStack alignment="center">
           <MaterialCommunityIcons name="chevron-up" style={styles.icon, styles.largerIcon} color={theme['color-primary-500']} />
-          <Text appearance="hint" style={styles.metaText}>{upvotes}</Text>
+          <Text appearance="hint" style={styles.metaText}>{isNaN(upvotes) ? '—' : upvotes}</Text>
         </HStack>
         <HStack alignment="center">
           <MaterialCommunityIcons name="comment" style={styles.icon} color={theme['color-primary-500']} />

@@ -12,6 +12,9 @@ import AssetsIconsPack from "assets/AssetsIconsPack";
 import { Provider } from "react-redux";
 import store from "reduxs/store";
 import useCachedResources from "hooks/useCacheResource";
+import { enableScreens } from 'react-native-screens';
+
+enableScreens();
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
@@ -27,14 +30,14 @@ export default function App() {
         theme={{ ...eva.dark, ...customTheme, ...darkTheme }}
         customMapping={{ ...eva.mapping, ...customMapping }}
       >
-        <Provider store={store}>
+      <Provider store={store}>
           <StatusBar
             barStyle={"light-content"}
             translucent={true}
             backgroundColor={"#00000000"}
           />
           <AppContainer />
-        </Provider>
+      </Provider>
       </ApplicationProvider>
     </SafeAreaProvider>
   );

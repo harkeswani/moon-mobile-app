@@ -1,80 +1,88 @@
 import * as React from 'react';
-import { ColorValue, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
-// ----------------------------- UI kitten -----------------------------------
+import { TouchableOpacity, Alert } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
-// ----------------------------- Components & Elements -----------------------------------
 import { HStack } from 'components';
 import ThemeLogo from 'elements/App/ThemeLogo';
+import { useNavigation } from '@react-navigation/native';
 
-interface IBottomBarSocialProps {
-  withLogo?: boolean;
-  activeButtonColor?: string | ColorValue;
-  iconActiveColor?: string | ColorValue;
-  style?: StyleProp<ViewStyle> | undefined;
-}
-
-const BottomBarSocial = ({
-  withLogo = false,
-  activeButtonColor,
-  iconActiveColor,
-  style,
-}: IBottomBarSocialProps) => {
+const NavBar = ({ }) => {
+  const navigation = useNavigation();
   const styles = useStyleSheet(themedStyles);
-  const [activeTab, setActive] = React.useState(4);
+  const [activeTab, setActiveTab] = React.useState(0);
+
   const _onPress = (index: number) => () => {
-    setActive(index);
+    setActiveTab(index);
+    console.log(index);
+    if (index===3){
+      navigation.navigate('Search');
+    }
   };
+
+  const handleLogoPress = () => {
+    
+  };
+
   const data = [
-    { icon: 'house' },
-    { icon: 'calendar' },
-    { icon: 'logo' },
-    { icon: 'gearsix' },
+    { icon: 'receipt' },
     { icon: 'user' },
+    { icon: 'logo' }, // Added onPress handler for logo
+    { icon: 'search' },
+    { icon: 'gearsix' },
   ];
+
   return (
     <HStack style={styles.container} level="1">
-      {data &&
-        data.map((item, i) => {
-          const isActive = activeTab === i;
-          return item.icon === 'logo' && withLogo ? (
-            <ThemeLogo key={'logo'} />
-          ) : item.icon !== 'logo' ? (
-            <TouchableOpacity
-              key={i}
+      {data.map((item, i) => {
+        const isActive = activeTab === i;
+        return item.icon === 'logo' ? (
+          <TouchableOpacity
+            key="logo"
+            onPress={handleLogoPress}
+            style={styles.logoButton}>
+            <ThemeLogo onPress={handleLogoPress} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            key={i}
+            style={[
+              styles.button,
+              isActive && styles.activeButton,
+              isActive && { backgroundColor: styles.activeButton.backgroundColor },
+            ]}
+            onPress={_onPress(i)}
+          >
+            <Icon
+              pack="assets"
+              name={item.icon}
               style={[
-                styles.button,
-                isActive && styles.activeButton,
-                isActive && { backgroundColor: activeButtonColor },
+                styles.icon,
+                isActive && styles.activeIcon,
+                isActive && { tintColor: styles.activeIcon.tintColor },
               ]}
-              onPress={_onPress(i)}>
-              <Icon
-                pack="assets"
-                name={item.icon}
-                style={[
-                  styles.icon,
-                  isActive && styles.activeIcon,
-                  isActive && { tintColor: iconActiveColor },
-                ]}
-              />
-            </TouchableOpacity>
-          ) : null;
-        })}
+            />
+          </TouchableOpacity>
+        );
+      })}
     </HStack>
   );
 };
 
-export default BottomBarSocial;
+export default NavBar;
 
 const themedStyles = StyleService.create({
   container: {
     paddingHorizontal: 24,
     paddingVertical: 8,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
   },
   button: {
     padding: 8,
-    borderRadius: 99,
+    borderRadius: 16,
   },
   icon: {
     width: 24,
@@ -86,5 +94,8 @@ const themedStyles = StyleService.create({
   },
   activeButton: {
     backgroundColor: 'color-primary-default',
+  },
+  logoButton: {
+    padding: 0,
   },
 });

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {DrawerActions} from '@react-navigation/native';
-import {navigationRef} from 'navigation/root-navigation';
 import {useDrawerStatus} from '@react-navigation/drawer';
 
 const useDrawer = () => {

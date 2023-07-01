@@ -1,29 +1,30 @@
-import * as React from 'react';
-import { View } from 'react-native';
+import React from 'react';
 import { enableScreens } from 'react-native-screens';
 import { NavigationContainer } from '@react-navigation/native';
-import { useTheme } from '@ui-kitten/components';
-import { RootStackParamList } from 'types/navigation-types';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { navigationRef } from './root-navigation';
-import AppNavigator from './AppNavigator';
+
+import PostScreen from '/screens/PostScreen';
+import CommentsScreen from '/screens/CommentsScreen';
+import Search from '/screens/Search';
+
+import NavBar from '/elements/NavBar';
 
 enableScreens();
+const Stack = createNativeStackNavigator();
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppContainer = () => {
-  const themes = useTheme();
   return (
-    <NavigationContainer ref={navigationRef}>
-      <View style={{ backgroundColor: themes['background-basic-color-1'], flex: 1 }}>
-        <Stack.Navigator
-          initialRouteName={'App'}
-          screenOptions={{
-            headerShown: false,
-          }}>
-          <Stack.Screen name="App" component={AppNavigator} />
-        </Stack.Navigator>
-      </View>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="PostScreen"
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <Stack.Screen name="PostScreen" component={PostScreen} />
+        <Stack.Screen name="CommentsScreen" component={CommentsScreen} />
+        <Stack.Screen name="Search" component={Search} />
+      </Stack.Navigator>
+      <NavBar withLogo />
     </NavigationContainer>
   );
 };
