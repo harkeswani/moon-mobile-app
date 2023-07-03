@@ -6,8 +6,6 @@ import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
 import { useLayout } from 'hooks';
 import { StyleService, useStyleSheet, ViewPager, Avatar } from '@ui-kitten/components';
-import NavBar from 'elements/NavBar';
-import TopBar from 'elements/TopBar';
 import RecursiveComment from 'components/RecursiveComment';
 
 const CommentsScreen = ({ route }) => {
@@ -25,11 +23,16 @@ const CommentsScreen = ({ route }) => {
   const fetchPostAndComments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(post.link);
+      const response = await fetch(post.link+"?limit=5");
+      console.log(0);
       const html = await response.text();
+      console.log(50);
       const $ = cheerio.load(html);
+      console.log(100);
       const parsedComments = parseCommentsFromHTML($);
+      console.log(200);
       setComments(parsedComments);
+      console.log(300);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -49,29 +52,33 @@ const CommentsScreen = ({ route }) => {
     const score = parseInt($comment.find('.score.unvoted').attr('title'));
     const timePosted = $comment.find('.live-timestamp:first').text();
     const text = $comment.find('.md:first').text();
+    const numChildren = $comment.find('.numchildren:first').text();
     const childComments = [];
     const depth = parentDepth + 1;
    // Check if the comment has a child comment
     if ($comment.has('.child').length > 0) {
       // Select the immediate child comments and iterate over them
-      $comment.children('.child').children('.comment').each((index, element) => {
+      $comment.find('.child:first').find('.sitetable:first').children('.comment').each((index, element) => {
         const $childComment = $(element);
         const childCommentData = parseComment($childComment, depth);
         childComments.push(childCommentData);
       });
     }
+    const collapsed = false;
     
     return {
       author,
       score,
       timePosted,
       text,
+      numChildren,
       childComments,
       depth,
+      collapsed,
     };
   };
 
-  $('.comment').each((index, element) => {
+  $('.sitetable.nestedlisting').children('.comment').each((index, element) => {
     const $comment = $(element);
     const commentData = parseComment($comment, 0);
     comments.push(commentData);
@@ -83,7 +90,6 @@ const CommentsScreen = ({ route }) => {
 
   return (
     <Container style={styles.container}>
-    <TopBar subredditName={'subredditName'} onSearchPress={null} top={top} />
     <ScrollView style={styles.content} >
         <Post data={post} />
         {loading ? (

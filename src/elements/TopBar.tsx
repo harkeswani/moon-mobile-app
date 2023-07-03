@@ -1,64 +1,67 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
-import { useStyleSheet, StyleService } from '@ui-kitten/components';
+import { Avatar, Icon, Input, StyleService, TopNavigation, useStyleSheet, useTheme } from '@ui-kitten/components';
 import { NavigationAction, Container, Content, Text, HStack, VStack } from 'components';
+import { useNavigation } from '@react-navigation/native';
 
-const TopBar = ({ subredditName, onSearchPress, top }) => {
+import DropSearch from 'elements/DropSearch';
+
+const TopBar = ({ backText, locationText, toggleDropdown }) => {
+  const navigation = useNavigation();
+  const themes = useTheme();
   const styles = useStyleSheet(themedStyles);
+    
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
 
   return (
-    <HStack pt={top + 4} level="2" ph={12} itemsCenter pv={4}>
-      <NavigationAction icon="envelope" />
-      <Text category="h5">{subredditName !== '' ? subredditName : 'Home'}</Text>
-      <NavigationAction icon="gearsix" />
+    <HStack pt={40} pb={0} level="1" ph={8} pv={4} itemsCenter >
+      <TouchableOpacity style={styles.button} onPress={handleBackPress}>
+        <HStack itemsCenter>
+          <Icon name="caret-left" style={styles.icons} />
+          <Text category="h5">Back</Text>
+        </HStack>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, styles.center]} onPress={toggleDropdown}>
+        <HStack itemsCenter>
+          <Text category="h5" >{locationText !== '' ? locationText : 'Home'}</Text>
+          <Icon name="caret-down" style={styles.icons} />
+        </HStack>
+      </TouchableOpacity>
+      <HStack itemsCenter>
+        <TouchableOpacity style={styles.button} onPress={toggleDropdown}>
+          <Icon name="bookmark" style={styles.iconButtons} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={toggleDropdown}>
+          <Icon name="dot-six" style={styles.iconButtons} />
+        </TouchableOpacity>
+      </HStack>
     </HStack>
   );
 };
 
 const themedStyles = StyleService.create({
-  container: {
-    flex: 1,
-    paddingTop: 0,
-  },
-  topNavigation: {
-    backgroundColor: 'background-basic-color-2',
-  },
-  content: {
-    flexGrow: 1,
-    paddingBottom: 100,
-  },
-  avatar: {
-    width: 24,
+  icons: {
     height: 24,
+    width: 24,
+    tintColor: 'white',
   },
-  layoutAvatar: {
-    borderRadius: 99,
-    borderWidth: 1,
-    borderColor: 'text-white-color',
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    zIndex: 100,
+  iconButtons: {
+    height: 32,
+    width: 32,
+    tintColor: 'white',
   },
-  contentPost: {
-    gap: 8,
-    paddingTop: 0,
-    paddingLeft: 8,
-    paddingRight: 8,
-    paddingBottom: 40,
+  button: {
+    padding: 8,  
   },
-  bottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'gray',
-    paddingHorizontal: 8,
+  center: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginLeft: "auto",
+    marginRight: "auto",
   },
 });
 

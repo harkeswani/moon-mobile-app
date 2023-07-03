@@ -13,10 +13,10 @@ import NavBar from 'elements/NavBar';
 import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
 
-import TopBar from 'elements/TopBar';
+import { fetchRedditPosts } from 'services/fetchParseWorker.js';
 
-const PostScreen = ({ navigation }) => {
-
+const PostScreen = ({ navigation, route }) => {
+    
   const { height, width, top, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const [posts, setPosts] = useState([]);
@@ -30,7 +30,8 @@ const PostScreen = ({ navigation }) => {
   const [nextPageUrl, setNextPageUrl] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-
+    
+  const blockAds = true; // Set to true to block ads
     
   useEffect(() => {
     fetchRedditPosts();
@@ -103,10 +104,24 @@ const PostScreen = ({ navigation }) => {
     const commentText = $post.find('.bylink.comments').text();
     const comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
     const time = $post.find('.live-timestamp').text();
+    if (time=='' && blockAds){
+        return;
+    }
     let image = undefined;
     const link = $post.find('.bylink.comments').attr('href');
+    let website = undefined;
 
-    image = $post.find('.thumbnail img').attr('src');
+    data = $post.attr('data-url');
+    if (data && data.startsWith('http')) {
+      if (/\.(jpg|jpeg|png|gif)$/i.test(data)){
+         image = data;
+      } else {
+          website = data;
+      }
+    }
+    
+
+    console.log(image);
 
     // Construct the post object
     const post = {
@@ -144,8 +159,6 @@ const PostScreen = ({ navigation }) => {
     
   return (
     <Container style={styles.container}>
-      <TopBar subredditName={subredditName} onSearchPress={() => setShowSearchBar(true)} top={top} />
-
       <ScrollView
       style={styles.content}
       onScroll={handleScroll}

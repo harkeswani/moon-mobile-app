@@ -1,16 +1,19 @@
-import React, { memo } from 'react';
-import { TouchableOpacity, Image } from 'react-native';
-import { useTheme, StyleService, useStyleSheet } from '@ui-kitten/components';
-import { HStack, Text, VStack } from 'components';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { memo, useState } from 'react';
+import { View, TouchableWithoutFeedback, TouchableOpacity, Image } from 'react-native';
+import { useTheme, Icon, Input, StyleService, TopNavigation, useStyleSheet } from '@ui-kitten/components';
+
+// ----------------------------- Components -----------------------------------
+import { NavigationAction, Container, Content, Text, HStack, VStack, IDivider } from 'components';
 
 interface Comment {
   author: string;
   score: number;
   text: string;
   timePosted: string;
+  numChildren: string;
   childComments?: Comment[];
   depth: number;
+  collapsed: Boolean;
 }
 
 interface RecursiveCommentProps {
@@ -21,68 +24,72 @@ const RecursiveComment = memo(({ comment }: RecursiveCommentProps) => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
 
-  const { author, score, text, timePosted, childComments, depth } = comment;
+  const { author, score, text, timePosted, numChildren, childComments, depth, collapsed } = comment;
 
   const renderChildComments = (comments: Comment[] = []) => {
     return comments.map((childComment, index) => (
-      <RecursiveComment key={index} comment={childComment} depth={depth+1} />
+      <RecursiveComment key={index} comment={childComment} />
     ));
   };
-    
-  const offset = depth*50;
+
+  const [isCollapsed, setCollapsed] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed(!isCollapsed);
+  };
+
+  const offset = (depth-1) * 16;
+
+  const getRandomColor = () => {
+    const red = Math.floor(Math.random() * 256);
+    const green = Math.floor(Math.random() * 256);
+    const blue = Math.floor(Math.random() * 256);
+    return `rgb(${red}, ${green}, ${blue})`;
+  };
+  const randomColor = getRandomColor();
 
   return (
-    <VStack style={styles.container} level="2" border={8}>
-  <HStack style={styles.meta} alignment="center" justifyContent="space-between">
-    <HStack alignment="center">
-      <Text>{author}</Text>
-      <MaterialCommunityIcons
-        name="arrow-up-bold"
-        style={styles.icon}
-        color={theme['color-primary-500']}
-      />
-      <Text appearance="hint" style={styles.metaText}>
-        {isNaN(score) ? '—' : score}
-      </Text>
-    </HStack>
-    <Text appearance="hint" style={styles.metaText}>
-      {timePosted}
-    </Text>
-  </HStack>
-  <VStack gap={0} padding={8}>
-    <Text appearance="hint" category="c1" style={styles.commentText}>
-      {text}
-    </Text>
-  </VStack>
-  {childComments && childComments.length > 0 && (
-    <VStack style={styles.childCommentsContainer}>
-      {renderChildComments(childComments)}
-    </VStack>
-  )}
-</VStack>
+    <TouchableWithoutFeedback onPress={toggleCollapsed}>
+        <View>
+    <HStack mt={8} mb={0} ml={offset} gap={8} alignItems="stretch" justifyContent="flex-start">
+      <View style={[styles.verticalLine, { backgroundColor: randomColor }]} />
 
+        <VStack style={{ flex: 1 }} gap={0}>
+          <HStack itemsCenter justifyContent="space-between">
+            <HStack itemsCenter gap={4}>
+              <Text category="h5">{author}</Text>
+              <Icon pack="assets" name="caret-up" />
+              <Text category="h6" status="platinum">
+                {isNaN(score) ? '—' : score}
+              </Text>
+            </HStack>
+            <Text category="subhead" status="platinum">
+              {timePosted}
+            </Text>
+          </HStack>
+          {!isCollapsed ? (
+            <Text mb={0} category="subhead" status="placeholder">
+              {text}
+            </Text>
+          ) : (
+            <Text mb={0} category="subhead" status="placeholder">
+              {numChildren}
+            </Text>
+          )}
+        </VStack>
+    </HStack>
+    {!isCollapsed && renderChildComments(childComments)}
+    </View>  
+    </TouchableWithoutFeedback>
   );
 });
+
 
 export default RecursiveComment;
 
 const themedStyles = StyleService.create({
-  container: {
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  commentText: {
-    marginBottom: 0,
-  },
-  meta: {
-    padding: 8,
-  },
-  icon: {
-    fontSize: 20,
-    marginRight: 2,
-  },
-  metaText: {
-    fontSize: 12,
-    marginLeft: 2,
+  verticalLine: {
+    width: 2,
+    height: '100%',
   },
 });

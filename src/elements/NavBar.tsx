@@ -5,7 +5,7 @@ import { HStack } from 'components';
 import ThemeLogo from 'elements/App/ThemeLogo';
 import { useNavigation } from '@react-navigation/native';
 
-const NavBar = ({ }) => {
+const NavBar = () => {
   const navigation = useNavigation();
   const styles = useStyleSheet(themedStyles);
   const [activeTab, setActiveTab] = React.useState(0);

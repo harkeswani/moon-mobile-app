@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { ImageRequireSource, ColorValue, Image, TouchableOpacity } from 'react-native';
 // ----------------------------- UI kitten -----------------------------------
-import { useTheme, StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
+import { Avatar, Icon, Input, StyleService, TopNavigation, useStyleSheet, useTheme } from '@ui-kitten/components';
 
 // ----------------------------- Hook -----------------------------------
 import { useLayout } from 'hooks';
@@ -9,10 +9,10 @@ import { useLayout } from 'hooks';
 import { useNavigation } from '@react-navigation/native';
 // ----------------------------- Components -----------------------------------
 import { HStack, Text, VStack } from 'components';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface PostContentProps {
   title: string;
+  author: string;
   description: string;
   subreddit: string;
   tags: string;
@@ -30,31 +30,30 @@ const Post = memo(({ data, onPress }: { data: PostContentProps; onPress: (link: 
     
   const navigation = useNavigation();
 
-  const {title, description, subreddit, tags, upvotes, comments, image, time, link} = data;
-  const imageUrl = image && image.replace(/^\/\//, '');
-  console.log(imageUrl);
+  const {title, author, description, subreddit, tags, upvotes, comments, image, time, link} = data;
   return (
     <TouchableOpacity onPress={() => onPress(data)}>
-      <VStack style={styles.container} level="2" border={8}>
+      <VStack style={styles.container} level="2" border={4}>
         <VStack gap={0} padding={8}>
-          <Text category="h5">{title}</Text>
-          <Text appearance="hint" category="c1" style={styles.subreddit}>{subreddit}</Text>
+          <Text category="subhead">{title}</Text>
+          <HStack>
+            <Text appearance="hint" category="c1" style={styles.subreddit}>{subreddit}</Text>
+            <Icon pack="assets" name="dots-three-vertical" />
+          </HStack>
         </VStack>
-        {image && typeof image !== "undefined" && (
-          <Image source={{ uri: image.startsWith("//") ? `https:${image}` : image }} style={styles.image} />
-        )}
-        <VStack gap={0} padding={8}>
+        {image && <Image source={{ uri: image }} style={styles.image} />}
+        <VStack gap={0} padding={4}>
           <HStack style={styles.meta} alignment="center" justifyContent="space-between">
         <HStack alignment="center">
-          <MaterialCommunityIcons name="chevron-up" style={styles.icon, styles.largerIcon} color={theme['color-primary-500']} />
+          <Icon name="caret-up" color={theme['color-primary-500']} />
           <Text appearance="hint" style={styles.metaText}>{isNaN(upvotes) ? '—' : upvotes}</Text>
         </HStack>
         <HStack alignment="center">
-          <MaterialCommunityIcons name="comment" style={styles.icon} color={theme['color-primary-500']} />
+          <Icon name="chat-bubble"  color={theme['color-primary-500']} />
           <Text appearance="hint" style={styles.metaText}>{comments} comments</Text>
         </HStack>
         <HStack alignment="center">
-          <MaterialCommunityIcons name="clock-outline" style={styles.icon} color={theme['color-primary-500']} />
+          <Icon name="timer" color={theme['color-primary-500']} />
           <Text appearance="hint" style={styles.metaText}>{time}</Text>
         </HStack>
       </HStack>
@@ -89,17 +88,13 @@ const themedStyles = StyleService.create({
     marginBottom: 0,
   },
   image: {
-    width: '100%',
     height: 200,
     marginBottom: 0,
     borderRadius: 0,
+    backgroundColor: 'black', // Add a black background color for the black bars
   },
   meta: {
     marginTop: 0,
-  },
-  icon: {
-    fontSize: 16,
-    marginRight: 2,
   },
   largerIcon: {
     fontSize: 24, // Larger size for the chevron-up icon
