@@ -19,6 +19,11 @@ const Stack = createNativeStackNavigator();
 
 const AppContainer = () => {
   const [isDropSearchOpen, setDropSearchOpen] = useState(false);
+  const [subredditName, setSubredditName] = useState('');
+    
+  const handleSubredditChange = (name) => {
+    setSubredditName(name);
+  };
 
   const toggleDropSearch = () => {
     setDropSearchOpen(!isDropSearchOpen);
@@ -26,9 +31,9 @@ const AppContainer = () => {
 
   return (
     <NavigationContainer>
-      <TopBar locationText='Home' toggleDropdown={toggleDropSearch} />
+      <TopBar locationText={subredditName} toggleDropdown={toggleDropSearch} />
       <Modal visible={isDropSearchOpen} transparent>
-        <DropSearch onClose={toggleDropSearch} />
+        <DropSearch onClose={toggleDropSearch} onSubredditChange={handleSubredditChange} />
       </Modal>
       <Stack.Navigator
         initialRouteName="PostScreen"

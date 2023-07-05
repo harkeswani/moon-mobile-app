@@ -48,7 +48,7 @@ const RecursiveComment = memo(({ comment, renderDepth }: RecursiveCommentProps) 
     
   const loadMoreComments = async (comment) => {
       setIsLoadingMore(true);
-      const parsedData = await fetchPostCommentsOnPage(comment.permalink+'?limit=10');
+      const parsedData = await fetchPostCommentsOnPage(comment.permalink+'?limit=100');
       comment.childComments = parsedData.comments[0].childComments;
       setIsLoadingMore(false);
       setIsLoadingDone(true);

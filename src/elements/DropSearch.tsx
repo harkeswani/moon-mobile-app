@@ -9,7 +9,7 @@ import {LinearGradient} from 'expo-linear-gradient';
 import { Images } from 'assets/images';
 import keyExtractorUtil from 'utils/keyExtractorUtil';
 
-const DropSearch = ({ onClose }) => {
+const DropSearch = ({ onClose, onSubredditChange }) => {
   const [searchText, setSearchText] = useState('');
   const searchInputRef = useRef(null);
     
@@ -18,7 +18,8 @@ const DropSearch = ({ onClose }) => {
   const handleSearch = () => {
     // Implement your search functionality here
     console.log('Perform search with text:', searchText);
-    navigation.navigate('PostScreen', { searchText });
+    onSubredditChange(searchText);
+    navigation.navigate('PostScreen', { subredditName: searchText });
     onClose();
   };
 

@@ -1,8 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import cheerio from 'cheerio';
 import axios from 'axios';
-
-import { dispatch, dispatchOnMainThread } from "react-native-thread-support";
+import DOMParser from 'react-native-html-parser';
 
 let cancelToken;
 
@@ -13,32 +12,37 @@ export const cancelFetch = async () => {
 const blockAds = true; // Set to true to block ads
 
 export const fetchPostsOnPage = async (url) => {
-  dispatch(() => {
-      console.log("Hello!!!");
-  });
+  console.log(url);
   if (cancelToken) {
     cancelToken.cancel('Request canceled');
   }
   cancelToken = axios.CancelToken.source();
-
-  return new Promise((resolve, reject) => {
-    console.log(url);
+    
+  try {
     const startTime = performance.now();
-    axios.get(url, { cancelToken: cancelToken.token })
-      .then(response => {
-        const fetchTime = performance.now() - startTime;
-        const html = response.data;
-        const parseStartTime = performance.now();
-        const parsedData = parsePostsFromHTML(html);
-        const parseTime = performance.now() - parseStartTime;
-        console.log(`Fetch time: ${fetchTime} ms`);
-        console.log(`Parse time: ${parseTime} ms`);
-        resolve(parsedData);
-      })
-      .catch(error => {
-        console.log(error);
-        reject('Subreddit does not exist');
-      });
+    const response = await axios.get(url, { cancelToken: cancelToken.token });
+    const fetchTime = performance.now() - startTime;
+    const html = response.data;
+    console.log(html.length);
+
+    const parseStartTime = performance.now();
+    const parsedData = parsePostsFromHTML(html);
+    const parseTime = performance.now() - parseStartTime;
+
+    console.log(`Fetch time: ${fetchTime} ms`);
+    console.log(`Parse time: ${parseTime} ms`);
+
+    return parsedData;
+  } catch (error) {
+    console.log(error);
+    throw new Error('Subreddit does not exist');
+  }
+
+};
+
+const delay = (milliseconds) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
   });
 };
 
@@ -74,7 +78,6 @@ export const fetchPostCommentsOnPage = async (url) => {
   const $ = cheerio.load(html);
   const postData = [];
   const comments = [];
-
   const parseComment = ($comment, parentDepth) => {
     const author = $comment.find('.author:first').text();
     const score = parseInt($comment.find('.score.unvoted').attr('title'));
@@ -93,7 +96,6 @@ export const fetchPostCommentsOnPage = async (url) => {
         childComments.push(childCommentData);
       });
       if ($comment.find('.child:first').find('.sitetable:first').find('.morechildren').length>0){
-          console.log("more children");
           loadMore = true;
       }
     }
@@ -128,6 +130,7 @@ export const fetchPostCommentsOnPage = async (url) => {
 };
     
 const parsePostsFromHTML = (htmlContent) => {
+  console.log(performance.now());
   const $ = cheerio.load(htmlContent);
   console.log(performance.now());
   const parsedPosts = [];

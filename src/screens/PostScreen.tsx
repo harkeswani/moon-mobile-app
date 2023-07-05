@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Image, ActivityIndicator, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 // ----------------------------- UI kitten -----------------------------------
 import { StyleService, useStyleSheet, ViewPager, Avatar } from '@ui-kitten/components';
@@ -13,17 +13,17 @@ import NavBar from 'elements/NavBar';
 import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
 import axios from 'axios';
+import { useRoute } from '@react-navigation/native';
 
 import { fetchPostsOnPage, cancelFetch } from 'services/fetchParsePage.js';
 
 const PostScreen = ({ navigation, route }) => {
-    
+  
+  // Make sure the route object is defined before accessing parameters
   const { height, width, top, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const [posts, setPosts] = useState([]);
-  const [subredditName, setSubredditName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [sortMethod, setSortMethod] = useState(TABS[initialActiveTabIndex]);
   const [loading, setLoading] = useState(false); // Added loading state
   const [moreLoading, setMoreLoading] = useState(false); // Added loading state
@@ -31,26 +31,32 @@ const PostScreen = ({ navigation, route }) => {
   const [nextPageUrl, setNextPageUrl] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [lastLoadTime, setLastLoadTime] = useState(0);
-    
-  const blockAds = true; // Set to true to block ads
-    
+  const [subredditName, setSubredditName] = useState('');
+
+  const blockAds = true;
+
+  useEffect(() => {
+    if (route && route.params && route.params.subredditName) {
+      setSubredditName(route.params.subredditName);
+    }
+  }, [route.params]);
+
   useEffect(() => {
     fetchRedditPosts();
   }, [subredditName, sortMethod]);
   
-  const fetchRedditPosts = async () => {
-    setLoading(true);
-    let url = 'https://old.reddit.com/';
-    if (subredditName) {
-      url += 'r/'+subredditName+'/';
-    }
-    url += `${sortMethod}/`;
-    const parsedData = await fetchPostsOnPage(url);
-    setPosts(parsedData.parsedPosts);
-    setNextPageUrl(parsedData.nextPageUrl);
-    setLoading(false);
-  };
+  const fetchRedditPosts = useCallback(async () => {
+  setLoading(true);
+  let url = 'https://old.reddit.com/';
+  if (subredditName) {
+    url += 'r/' + subredditName + '/';
+  }
+  url += `${sortMethod}/`;
+  const parsedData = await fetchPostsOnPage(url);
+  setPosts(parsedData.parsedPosts);
+  setNextPageUrl(parsedData.nextPageUrl);
+  setLoading(false);
+}, [sortMethod, subredditName]);
   const loadNextPage = async () => {
     setMoreLoading(true);
     const parsedData = await fetchPostsOnPage(nextPageUrl);
@@ -63,10 +69,8 @@ const PostScreen = ({ navigation, route }) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     const isNearBottom = contentSize.height - contentOffset.y <= 1000;
     const currentTime = Date.now();
-    const timeDifference = currentTime - lastLoadTime;
-    if (!loading && !moreLoading && isNearBottom && timeDifference >= 1000) {
+    if (!loading && !moreLoading && isNearBottom) {
       loadNextPage();
-      setLastLoadTime(currentTime); // Update the last load time
     }
   };
 
@@ -76,11 +80,6 @@ const PostScreen = ({ navigation, route }) => {
 
   const handleSearch = () => {
     setIsEditing(false);
-    fetchRedditPosts();
-  };
-    
-  const onRefresh = () => {
-    setRefreshing(true);
     fetchRedditPosts();
   };
     
