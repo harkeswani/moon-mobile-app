@@ -1,17 +1,39 @@
+import React, { memo, useEffect, useState } from 'react';
 import cheerio from 'cheerio';
-import { Image, ActivityIndicator, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import axios from 'axios';
+import Worker from 'react-native-web-worker';
 
-const calculateFactorial = (number) => {
-  let factorial = 1;
-  for (let i = 2; i <= number; i++) {
-    factorial *= i;
-  }
-  return factorial;
+self.onmessage = ({ data }) => {
+  const posts = parsePostsFromHTML(data);
+  self.postMessage(posts);
 };
 
-self.onmessage = (event) => {
-  const number = event.data;
-  const result = calculateFactorial(number);
-  self.postMessage(result);
+function parsePostsFromHTML(htmlContent) {
+  const $ = cheerio.load(htmlContent);
+  const posts = [];
+  const nextButtonUrl = $('.next-button a').attr('href');
+  // ... Rest of your parsing logic
+  return posts;
+}
+
+function fetchRedditPosts = async () => {
+    setLoading(true);
+    let url = 'https://old.reddit.com/';
+    if (subredditName) {
+      url += 'r/'+subredditName+'/';
+    }
+    url += `${sortMethod}/`;
+    axios.get(url)
+      .then(response => {
+        console.log(url);
+        const html = response.data;
+        const parsedPosts = parsePostsFromHTML(html);
+        setPosts(parsedPosts);
+        setLoading(false);
+      })
+    .catch(error => {
+        setLoading(false);
+        console.log(error);
+        Alert.alert('Subreddit does not exist');
+    });
 };

@@ -8,6 +8,8 @@ import { useLayout } from 'hooks';
 import { StyleService, useStyleSheet, ViewPager, Avatar } from '@ui-kitten/components';
 import RecursiveComment from 'components/RecursiveComment';
 
+import { fetchPostCommentsOnPage, cancelFetch } from 'services/fetchParsePage.js';
+
 const CommentsScreen = ({ route }) => {
   const { postContent } = route.params;
   const [post, setPost] = useState(postContent);
@@ -21,84 +23,29 @@ const CommentsScreen = ({ route }) => {
   }, []);
 
   const fetchPostAndComments = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(post.link+"?limit=5");
-      console.log(0);
-      const html = await response.text();
-      console.log(50);
-      const $ = cheerio.load(html);
-      console.log(100);
-      const parsedComments = parseCommentsFromHTML($);
-      console.log(200);
-      setComments(parsedComments);
-      console.log(300);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
+    setLoading(true);
+    const parsedData = await fetchPostCommentsOnPage(post.link+'?limit=10');
+    setComments(parsedData.comments);
+    post.description = parsedData.postData[0];
+    setPost(post);
+    setLoading(false);
   };
     
   const handleScroll = (event) => {
       
   };
 
- const parseCommentsFromHTML = ($) => {
-  const comments = [];
-
-  const parseComment = ($comment, parentDepth) => {
-    const author = $comment.find('.author:first').text();
-    const score = parseInt($comment.find('.score.unvoted').attr('title'));
-    const timePosted = $comment.find('.live-timestamp:first').text();
-    const text = $comment.find('.md:first').text();
-    const numChildren = $comment.find('.numchildren:first').text();
-    const childComments = [];
-    const depth = parentDepth + 1;
-   // Check if the comment has a child comment
-    if ($comment.has('.child').length > 0) {
-      // Select the immediate child comments and iterate over them
-      $comment.find('.child:first').find('.sitetable:first').children('.comment').each((index, element) => {
-        const $childComment = $(element);
-        const childCommentData = parseComment($childComment, depth);
-        childComments.push(childCommentData);
-      });
-    }
-    const collapsed = false;
-    
-    return {
-      author,
-      score,
-      timePosted,
-      text,
-      numChildren,
-      childComments,
-      depth,
-      collapsed,
-    };
-  };
-
-  $('.sitetable.nestedlisting').children('.comment').each((index, element) => {
-    const $comment = $(element);
-    const commentData = parseComment($comment, 0);
-    comments.push(commentData);
-  });
-
-  return comments;
-  };
-
-
   return (
     <Container style={styles.container}>
     <ScrollView style={styles.content} >
-        <Post data={post} />
+        <Post data={post} type='comments' />
         {loading ? (
           <ActivityIndicator style={styles.loadingIndicator} /> // Show loading indicator while content is being fetched
         ) : (
         <Content vertical contentContainerStyle={styles.contentPost} onScroll={handleScroll}>
             <VStack>
                 {comments.map((comment, index) => (
-                    <RecursiveComment key={index} comment={comment} />
+                    <RecursiveComment key={index} comment={comment} renderDepth={1} />
                 ))}
             </VStack>
         </Content>

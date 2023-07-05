@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { ImageRequireSource, ColorValue, Image, TouchableOpacity } from 'react-native';
 // ----------------------------- UI kitten -----------------------------------
 import { Avatar, Icon, Input, StyleService, TopNavigation, useStyleSheet, useTheme } from '@ui-kitten/components';
@@ -20,19 +20,26 @@ interface PostContentProps {
   comments: number;
   image: string;
   time: string;
-  link: string;
+  collapsedContent: Boolean;
 }
 
-const Post = memo(({ data, onPress }: { data: PostContentProps; onPress: (link: string) => void }) => {
+const Post = ({ data, onPress, type }: { data: PostContentProps; onPress: (link: string) => void }) => {
   const { height, width, top, bottom } = useLayout();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
     
   const navigation = useNavigation();
+    
+  const [isCollapsed, setCollapsed] = useState(false);
 
-  const {title, author, description, subreddit, tags, upvotes, comments, image, time, link} = data;
+  const {title, author, description, subreddit, tags, upvotes, comments, image, time, collapsedContent} = data;
+
+  const toggleCollapsed = () => {
+    setCollapsed(!isCollapsed);
+  };
+  
   return (
-    <TouchableOpacity onPress={() => onPress(data)}>
+    <TouchableOpacity onPress={() => {(type=='comments')?toggleCollapsed():onPress(data)}}>
       <VStack style={styles.container} level="2" border={4}>
         <VStack gap={0} padding={8}>
           <Text category="subhead">{title}</Text>
@@ -42,6 +49,7 @@ const Post = memo(({ data, onPress }: { data: PostContentProps; onPress: (link: 
           </HStack>
         </VStack>
         {image && <Image source={{ uri: image }} style={styles.image} />}
+        {description && description!='undefined' && !isCollapsed && <Text appearance="hint" style={styles.descriptionText}>{description.trim()}</Text>}
         <VStack gap={0} padding={4}>
           <HStack style={styles.meta} alignment="center" justifyContent="space-between">
         <HStack alignment="center">
@@ -63,7 +71,7 @@ const Post = memo(({ data, onPress }: { data: PostContentProps; onPress: (link: 
       
     </TouchableOpacity>
   );
-});
+};
 
 export default Post;
 
@@ -102,5 +110,13 @@ const themedStyles = StyleService.create({
   metaText: {
     fontSize: 12,
     marginLeft: 2,
+  },
+  descriptionText: {
+    fontSize: 14, // Increase the font size for better readability
+    marginLeft: 2,
+    padding: 8, // Add padding to the text box
+    backgroundColor: 'transparent', // Set the background color to transparent
+    borderRadius: 8, // Add border radius for a rounded box appearance
+    lineHeight: 16,
   },
 });

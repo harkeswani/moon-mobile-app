@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     top: Dimensions.get('window').height * 0.15, // Adjust the value as needed to position the modal below the top bar
     width: Dimensions.get('window').width * 0.9, // Adjust the width as needed
     height: Dimensions.get('window').height * 0.4, // Adjust the height as needed
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0)',
     borderRadius: 24,
   },
   linear: {

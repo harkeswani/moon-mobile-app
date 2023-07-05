@@ -12,8 +12,9 @@ import Post from 'components/Post';
 import NavBar from 'elements/NavBar';
 import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
+import axios from 'axios';
 
-import { fetchRedditPosts } from 'services/fetchParseWorker.js';
+import { fetchPostsOnPage, cancelFetch } from 'services/fetchParsePage.js';
 
 const PostScreen = ({ navigation, route }) => {
     
@@ -30,6 +31,7 @@ const PostScreen = ({ navigation, route }) => {
   const [nextPageUrl, setNextPageUrl] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [lastLoadTime, setLastLoadTime] = useState(0);
     
   const blockAds = true; // Set to true to block ads
     
@@ -38,110 +40,35 @@ const PostScreen = ({ navigation, route }) => {
   }, [subredditName, sortMethod]);
   
   const fetchRedditPosts = async () => {
-    try {
-      setLoading(true);
-      let url = 'https://old.reddit.com/';
-      if (subredditName) {
-        url += 'r/'+subredditName+'/';
-      }
-      url += `${sortMethod}/`;
-
-      const response = await fetch(url);
-      console.log(url);
-      const html = await response.text();
-      const parsedPosts = parsePostsFromHTML(html);
-      setPosts(parsedPosts);
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      Alert.alert('Subreddit does not exist');
+    setLoading(true);
+    let url = 'https://old.reddit.com/';
+    if (subredditName) {
+      url += 'r/'+subredditName+'/';
     }
+    url += `${sortMethod}/`;
+    const parsedData = await fetchPostsOnPage(url);
+    setPosts(parsedData.parsedPosts);
+    setNextPageUrl(parsedData.nextPageUrl);
+    setLoading(false);
   };
   const loadNextPage = async () => {
-  try {
     setMoreLoading(true);
-    console.log(nextPageUrl);
-    const response = await fetch(nextPageUrl);
-    const html = await response.text();
-    const parsedPosts = parsePostsFromHTML(html);
-    setPosts((prevPosts) => [...prevPosts, ...parsedPosts]);
-
-    const $ = cheerio.load(html);
-    const nextButtonUrl = $('.next-button a').attr('href');
-    setNextPageUrl(nextButtonUrl);
-
+    const parsedData = await fetchPostsOnPage(nextPageUrl);
+    setPosts((prevPosts) => [...prevPosts, ...parsedData.parsedPosts]);
+    setNextPageUrl(parsedData.nextPageUrl);
     setMoreLoading(false);
-  } catch (error) {
-    setLoading(false);
-    console.log(error);
-  }
   };
 
   const handleScroll = (event) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const isNearBottom = contentSize.height -  contentOffset.y <= 4000;
-    if (isNearBottom && !moreLoading) {
+    const isNearBottom = contentSize.height - contentOffset.y <= 1000;
+    const currentTime = Date.now();
+    const timeDifference = currentTime - lastLoadTime;
+    if (!loading && !moreLoading && isNearBottom && timeDifference >= 1000) {
       loadNextPage();
+      setLastLoadTime(currentTime); // Update the last load time
     }
   };
-  const parsePostsFromHTML = (htmlContent) => {
-  const $ = cheerio.load(htmlContent);
-
-  const posts = [];
-  const nextButtonUrl = $('.next-button a').attr('href');
-  setNextPageUrl(nextButtonUrl);
-  // Iterate over each post element
-  $('.thing').each((index, element) => {
-    const $post = $(element);
-    // Extract the desired information
-    const title = $post.find('.title > a.title').text();
-    const description = 'undefined';
-    const tags = $post.find('.linkflairlabel').text();
-    const subreddit = $post.find('.subreddit').text();
-    const photoOrLink = $post.find('.thumbnail').attr('href');
-    const upvotes = parseInt($post.find('.score.likes').text());
-    const commentText = $post.find('.bylink.comments').text();
-    const comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
-    const time = $post.find('.live-timestamp').text();
-    if (time=='' && blockAds){
-        return;
-    }
-    let image = undefined;
-    const link = $post.find('.bylink.comments').attr('href');
-    let website = undefined;
-
-    data = $post.attr('data-url');
-    if (data && data.startsWith('http')) {
-      if (/\.(jpg|jpeg|png|gif)$/i.test(data)){
-         image = data;
-      } else {
-          website = data;
-      }
-    }
-    
-
-    console.log(image);
-
-    // Construct the post object
-    const post = {
-      title,
-      description,
-      subreddit,
-      tags,
-      upvotes,
-      comments,
-      image,
-      time,
-      link,
-    };
-
-    // Push the post object to the posts array
-    posts.push(post);
-  });
-
-  return posts;
-};
 
   const handlePostPress = (post) => {
     navigation.navigate('CommentsScreen', { postContent: post });
@@ -190,6 +117,7 @@ const PostScreen = ({ navigation, route }) => {
               time: post.time,
               link: post.link,
             }}
+            type='feed'
             onPress={handlePostPress}
           />
         ))}
