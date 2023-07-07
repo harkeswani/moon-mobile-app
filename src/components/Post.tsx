@@ -96,7 +96,7 @@ const themedStyles = StyleService.create({
     marginBottom: 0,
   },
   image: {
-    height: 200,
+    height: 400,
     marginBottom: 0,
     borderRadius: 0,
     backgroundColor: 'black', // Add a black background color for the black bars

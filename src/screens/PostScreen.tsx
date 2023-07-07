@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Image, ActivityIndicator, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { Image, ActivityIndicator, Alert, ScrollView, FlatList, TouchableOpacity, TextInput } from 'react-native';
 // ----------------------------- UI kitten -----------------------------------
 import { StyleService, useStyleSheet, ViewPager, Avatar } from '@ui-kitten/components';
 // ----------------------------- Hook -----------------------------------
@@ -14,6 +14,8 @@ import * as WebBrowser from 'expo-web-browser';
 import cheerio from 'cheerio';
 import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
+
+import { FlashList } from "@shopify/flash-list";
 
 import { fetchPostsOnPage, cancelFetch } from 'services/fetchParsePage.js';
 
@@ -65,15 +67,6 @@ const PostScreen = ({ navigation, route }) => {
     setMoreLoading(false);
   };
 
-  const handleScroll = (event) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const isNearBottom = contentSize.height - contentOffset.y <= 1000;
-    const currentTime = Date.now();
-    if (!loading && !moreLoading && isNearBottom) {
-      loadNextPage();
-    }
-  };
-
   const handlePostPress = (post) => {
     navigation.navigate('CommentsScreen', { postContent: post });
   };
@@ -85,11 +78,6 @@ const PostScreen = ({ navigation, route }) => {
     
   return (
     <Container style={styles.container}>
-      <ScrollView
-      style={styles.content}
-      onScroll={handleScroll}
-      scrollEventThrottle={16} // Adjust the throttle value as per your needs
-      >
       <TabBar
         tabs={TABS}
         activeIndex={active}
@@ -101,30 +89,26 @@ const PostScreen = ({ navigation, route }) => {
       {loading ? (
           <ActivityIndicator style={styles.loadingIndicator} /> // Show loading indicator while content is being fetched
       ) : (
-        <Content vertical contentContainerStyle={styles.contentPost} onScroll={handleScroll}>
-          {posts.map((post, index) => (
-          <Post
-            key={index}
-            data={{
-              title: post.title,
-              description: post.description,
-              subreddit: post.subreddit,
-              tags: post.tags,
-              upvotes: post.upvotes,
-              comments: post.comments,
-              image: post.image,
-              time: post.time,
-              link: post.link,
-            }}
-            type='feed'
-            onPress={handlePostPress}
-          />
-        ))}
-        <ActivityIndicator style={styles.loadingIndicator} />
-      </Content>
-      
+        <FlashList
+          data={posts}
+          keyExtractor={(item, index) => 'post_' + index}
+          renderItem={({item, index}) => (
+            <Post
+              data={item}
+              type='feed'
+              onPress={() => handlePostPress(item)}
+            />
+          )}
+          onEndReached={loadNextPage}
+          onEndReachedThreshold={1}
+          estimatedItemSize={200}
+          ListFooterComponent={() => (
+            moreLoading
+            ? <ActivityIndicator style={styles.loadingIndicator} />
+            : null
+          )}
+        />
       )}
-    </ScrollView>
     </Container>
   );
 };

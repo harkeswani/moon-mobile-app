@@ -69,8 +69,8 @@ export const fetchPostCommentsOnPage = async (url) => {
 
     return parsedData;
   } catch (error) {
-    console.log(error);
-    throw new Error('Subreddit does not exist');
+    //console.log(error);
+    //throw new Error('Subreddit does not exist');
   }
 };
 
