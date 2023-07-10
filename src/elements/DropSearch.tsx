@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, TouchableWithoutFeedback, Modal, TextInput, StyleSheet, Dimensions } from 'react-native';
+import { View, FlatList, TouchableOpacity, TouchableWithoutFeedback, Modal, TextInput, StyleSheet, Dimensions, Keyboard } from 'react-native';
 import { Avatar, Icon, Input, StyleService, TopNavigation, useStyleSheet } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
 
@@ -8,25 +8,40 @@ import { NavigationAction, Container, Content, Text, HStack, VStack, IDivider } 
 import {LinearGradient} from 'expo-linear-gradient';
 import { Images } from 'assets/images';
 import keyExtractorUtil from 'utils/keyExtractorUtil';
+import { FlashList } from "@shopify/flash-list";
+
+import Post from 'components/Post';
 
 const DropSearch = ({ onClose, onSubredditChange }) => {
   const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [moreLoading, setMoreLoading] = useState(false);
+
   const searchInputRef = useRef(null);
+  const timeoutRef = useRef(null);
     
   const navigation = useNavigation();
 
-  const handleSearch = () => {
+  const handleSearch = async (searchText) => {
     // Implement your search functionality here
-    console.log('Perform search with text:', searchText);
-    onSubredditChange(searchText);
-    navigation.navigate('PostScreen', { subredditName: searchText });
-    onClose();
+      try {
+        setMoreLoading(true);
+        const response = await fetch("http://74.50.93.99:8080/search/relevance?q="+searchText);
+        const data = await response.json();
+        console.log(data['results']);
+        setSearchResults(data['results']);
+        setMoreLoading(false);
+      } catch (error) {
+        console.error('API request failed:', error);
+        setMoreLoading(false);
+      }
+  };
+    
+  const handlePostPress = (post) => {
+    console.log("Hello");
+    navigation.navigate('CommentsScreen', { postContent: post });
   };
 
-  const handleCategoryPress = (category) => {
-    // Handle category button press
-    console.log('Category:', category);
-  };
     
   const handleContainerPress = (event) => {
     // Prevent closing the container when the TouchableOpacity is pressed
@@ -43,6 +58,13 @@ const DropSearch = ({ onClose, onSubredditChange }) => {
     // Focus on the text input when the DropSearch component is opened
     searchInputRef.current.focus();
   }, []);
+    
+  const handleInputChange = (text) => {
+    console.log(text);
+    setSearchText(text);
+    clearTimeout(timeoutRef.current); // Clear any existing timeout
+    timeoutRef.current = setTimeout(() => handleSearch(text), 200); // Delayed search after 200 milliseconds
+  };
 
   return (
     <TouchableWithoutFeedback style={styles.overlay} onPress={onClose}>
@@ -50,26 +72,28 @@ const DropSearch = ({ onClose, onSubredditChange }) => {
         <View style={styles.container} onStartShouldSetResponder={handleContainerPress}>
           <Input
             size="small"
-            placeholder="Enter something…"
+            placeholder="Search posts…"
             style={styles.search}
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={handleInputChange}
             onSubmitEditing={handleSearch}
             ref={searchInputRef}
             returnKeyType="search"
             blurOnSubmit={false}
             autoFocus
           />
-          <View style={styles.categoriesContainer}>
-            <TouchableOpacity style={styles.categoryButton} onPress={() => handleCategoryPress('Category 1')}>
-              {/* Category 1 button content */}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.categoryButton} onPress={() => handleCategoryPress('Category 2')}>
-              {/* Category 2 button content */}
-            </TouchableOpacity>
-            {/* Add more category buttons as needed */}
+          <View style={styles.responseContainer}>
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item, index) => 'post_' + index}
+              renderItem={({ item, index }) => {
+                const modifiedData = { ...item, collapsedContent: false };
+                return <Post data={modifiedData} type='feed' />;
+              }}
+              onPress={() => handlePostPress(item)}
+              estimatedItemSize={200}
+              />
           </View>
-        
         </View>
       </View>
     </TouchableWithoutFeedback>

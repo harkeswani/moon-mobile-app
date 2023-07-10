@@ -10,16 +10,21 @@ import { useNavigation } from '@react-navigation/native';
 // ----------------------------- Components -----------------------------------
 import { HStack, Text, VStack } from 'components';
 
+import FastImage from 'react-native-fast-image';
+
 interface PostContentProps {
-  title: string;
-  author: string;
-  description: string;
+  id: string;
   subreddit: string;
+  title: string;
+  description: string;
+  author: string;
   tags: string;
-  upvotes: number;
-  comments: number;
-  image: string;
-  time: string;
+  score: number;
+  num_comments: number;
+  image: url;
+  url: string;
+  permalink: string;
+  created_utc: number;
   collapsedContent: Boolean;
 }
 
@@ -32,10 +37,17 @@ const Post = ({ data, onPress, type }: { data: PostContentProps; onPress: (link:
     
   const [isCollapsed, setCollapsed] = useState(false);
 
-  const {title, author, description, subreddit, tags, upvotes, comments, image, time, collapsedContent} = data;
+  const {title, author, description, subreddit, tags, score, num_comments, permalink, image, url, created_utc, collapsedContent} = data;
 
   const toggleCollapsed = () => {
     setCollapsed(!isCollapsed);
+  };
+    
+  const checkgifv = (url?: string): boolean => {
+    if (!url) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.gifv'];
+    const lowercasedUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowercasedUrl.endsWith(ext));
   };
   
   return (
@@ -54,15 +66,15 @@ const Post = ({ data, onPress, type }: { data: PostContentProps; onPress: (link:
           <HStack style={styles.meta} alignment="center" justifyContent="space-between">
         <HStack alignment="center">
           <Icon name="caret-up" color={theme['color-primary-500']} />
-          <Text appearance="hint" style={styles.metaText}>{isNaN(upvotes) ? '—' : upvotes}</Text>
+          <Text appearance="hint" style={styles.metaText}>{isNaN(score) ? '—' : score}</Text>
         </HStack>
         <HStack alignment="center">
           <Icon name="chat-bubble"  color={theme['color-primary-500']} />
-          <Text appearance="hint" style={styles.metaText}>{comments} comments</Text>
+          <Text appearance="hint" style={styles.metaText}>{num_comments} comments</Text>
         </HStack>
         <HStack alignment="center">
           <Icon name="timer" color={theme['color-primary-500']} />
-          <Text appearance="hint" style={styles.metaText}>{time}</Text>
+          <Text appearance="hint" style={styles.metaText}>{created_utc}</Text>
         </HStack>
       </HStack>
 
@@ -96,10 +108,11 @@ const themedStyles = StyleService.create({
     marginBottom: 0,
   },
   image: {
-    height: 400,
-    marginBottom: 0,
-    borderRadius: 0,
-    backgroundColor: 'black', // Add a black background color for the black bars
+    width: '100%',
+    // Without height undefined it won't work
+    height: undefined,
+    // figure out your image aspect ratio
+    aspectRatio: 1/1,
   },
   meta: {
     marginTop: 0,

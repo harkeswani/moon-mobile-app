@@ -24,7 +24,8 @@ const CommentsScreen = ({ route }) => {
 
   const fetchPostAndComments = async () => {
     setLoading(true);
-    const parsedData = await fetchPostCommentsOnPage(post.link+'?limit=10');
+    const parsedData = await fetchPostCommentsOnPage(post.permalink+'?limit=10');
+    console.log(parsedData);
     setComments(parsedData.comments);
     post.description = parsedData.postData[0];
     setPost(post);
@@ -67,10 +68,6 @@ const themedStyles = StyleService.create({
     flexGrow: 1,
     paddingBottom: 100,
   },
-  avatar: {
-    width: 24,
-    height: 24,
-  },
   layoutAvatar: {
     borderRadius: 99,
     borderWidth: 1,
@@ -85,7 +82,7 @@ const themedStyles = StyleService.create({
     paddingTop: 0,
     paddingLeft: 8,
     paddingRight: 8,
-    paddingBottom: 40,
+    paddingBottom: 50,
   },
   bottom: {
     position: 'absolute',

@@ -5,16 +5,34 @@ import DOMParser from 'react-native-html-parser';
 
 let cancelToken;
 
+let over18Approved = false;
+
 export const cancelFetch = async () => {
     cancelToken.cancel();
 }
 
 const blockAds = true; // Set to true to block ads
 
+const sendOver18 = async () => {
+  const url18 = 'https://old.reddit.com/over18';
+  const payload = new URLSearchParams();
+  payload.append('over18', 'yes');
+  try {
+    const response = await axios.post(url18, payload);
+    console.log(response);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const fetchPostsOnPage = async (url) => {
   console.log(url);
+  if (!over18Approved){
+      //await sendOver18();
+      over18Approved = true;
+  }
   if (cancelToken) {
-    cancelToken.cancel('Request canceled');
+    await cancelToken.cancel('Request canceled');
   }
   cancelToken = axios.CancelToken.source();
     
@@ -23,7 +41,6 @@ export const fetchPostsOnPage = async (url) => {
     const response = await axios.get(url, { cancelToken: cancelToken.token });
     const fetchTime = performance.now() - startTime;
     const html = response.data;
-    console.log(html.length);
 
     const parseStartTime = performance.now();
     const parsedData = parsePostsFromHTML(html);
@@ -49,7 +66,7 @@ const delay = (milliseconds) => {
 export const fetchPostCommentsOnPage = async (url) => {
   console.log(url);
   if (cancelToken) {
-    cancelToken.cancel('Request canceled');
+    await cancelToken.cancel('Request canceled');
   }
   cancelToken = axios.CancelToken.source();
 
@@ -144,23 +161,24 @@ const parsePostsFromHTML = (htmlContent) => {
     const tags = $post.find('.linkflairlabel').text();
     const subreddit = $post.find('.subreddit').text();
     const photoOrLink = $post.find('.thumbnail').attr('href');
-    const upvotes = parseInt($post.find('.score.likes').text());
+    const score = parseInt($post.find('.score.likes').text());
     const commentText = $post.find('.bylink.comments').text();
-    const comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
+    const num_comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
     const time = $post.find('.live-timestamp').text();
+    const created_utc = $post.attr('data-timestamp')/1000;
     if (time=='' && blockAds){
         return;
     }
     let image = undefined;
-    const link = $post.find('.bylink.comments').attr('href');
-    let website = undefined;
+    const permalink = $post.find('.bylink.comments').attr('href');
+    let url = undefined;
 
     const data = $post.attr('data-url');
     if (data && data.startsWith('http')) {
       if (/\.(jpg|jpeg|png|gif)$/i.test(data)){
         image = data;
       } else {
-        website = data;
+        url = data;
       }
     }
     
@@ -172,11 +190,12 @@ const parsePostsFromHTML = (htmlContent) => {
       description,
       subreddit,
       tags,
-      upvotes,
-      comments,
+      score,
+      num_comments,
       image,
-      time,
-      link,
+      created_utc,
+      url,
+      permalink,
       collapsedContent,
     };
 
