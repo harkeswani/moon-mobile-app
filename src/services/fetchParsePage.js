@@ -32,7 +32,7 @@ export const fetchPostsOnPage = async (url) => {
       over18Approved = true;
   }
   if (cancelToken) {
-    await cancelToken.cancel('Request canceled');
+    //await cancelToken.cancel('Request canceled');
   }
   cancelToken = axios.CancelToken.source();
     
@@ -66,7 +66,7 @@ const delay = (milliseconds) => {
 export const fetchPostCommentsOnPage = async (url) => {
   console.log(url);
   if (cancelToken) {
-    await cancelToken.cancel('Request canceled');
+    //await cancelToken.cancel('Request canceled');
   }
   cancelToken = axios.CancelToken.source();
 
@@ -160,23 +160,23 @@ const parsePostsFromHTML = (htmlContent) => {
     const description = 'undefined';
     const tags = $post.find('.linkflairlabel').text();
     const subreddit = $post.find('.subreddit').text();
-    const photoOrLink = $post.find('.thumbnail').attr('href');
     const score = parseInt($post.find('.score.likes').text());
     const commentText = $post.find('.bylink.comments').text();
     const num_comments = isNaN(parseInt($post.find('.bylink.comments').text()))?0:parseInt($post.find('.bylink.comments').text());
     const time = $post.find('.live-timestamp').text();
     const created_utc = $post.attr('data-timestamp')/1000;
+    const permalink = $post.find('.bylink.comments').attr('href');
     if (time=='' && blockAds){
         return;
     }
-    let image = undefined;
-    const permalink = $post.find('.bylink.comments').attr('href');
+    const media = [];
     let url = undefined;
-
     const data = $post.attr('data-url');
     if (data && data.startsWith('http')) {
       if (/\.(jpg|jpeg|png|gif)$/i.test(data)){
-        image = data;
+        media.push(data);
+      } else if (data.startsWith('https://v.redd.it/')) {
+        media.push(data+"/HLSPlaylist.m3u8");
       } else {
         url = data;
       }
@@ -192,7 +192,7 @@ const parsePostsFromHTML = (htmlContent) => {
       tags,
       score,
       num_comments,
-      image,
+      media,
       created_utc,
       url,
       permalink,

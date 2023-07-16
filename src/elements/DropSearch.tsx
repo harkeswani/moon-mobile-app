@@ -26,7 +26,7 @@ const DropSearch = ({ onClose, onSubredditChange }) => {
     // Implement your search functionality here
       try {
         setMoreLoading(true);
-        const response = await fetch("http://74.50.93.99:8080/search/relevance?q="+searchText);
+        const response = await fetch("http://joinfedi.com:8080/search/relevance?q="+searchText);
         const data = await response.json();
         console.log(data['results']);
         setSearchResults(data['results']);
